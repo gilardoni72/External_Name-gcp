@@ -1,0 +1,78 @@
+gcloud auth login
+
+--------------------------------------------------
+CREATE PROJECT
+---------------------------------------------------
+gcloud projects create demo1-364616 --name="demo1"
+gcloud projects list
+gcloud config set project demo1-364616
+
+gcloud services enable servicenetworking.googleapis.com 
+gcloud services enable container.googleapis.com
+gcloud services enable sqladmin.googleapis.com
+gcloud services enable containerregistry.googleapis.com
+gcloud services enable compute.googleapis.com 
+
+
+--------------habilitar facturacion a tu projecto
+gcloud config set compute/zone us-central1-a
+
+---------------------------------------------------
+CREATE CLUSTER
+-------------------------------------------------------------------------------
+gcloud container clusters create micluster --num-nodes=3 --zone=us-central1-a
+gcloud container clusters list
+gcloud auth login
+gcloud container clusters get-credentials micluster
+
+
+---------------CREATE DATABASE-----------------------
+gcloud betsql instances create my-database \
+--project=demo1-364615 \
+--network=projects/demo1-364615/global/networks/VPC_NETWORK_NAME \
+--no-assign-ip \
+--allocated-ip-range-name=10.8.8.0/24
+---------------------------------------------
+gcloud sql instances create my-database --project=demo1-364616 --root-password=12345 --database-version=MYSQL_5_7 --network=projects/demo1-364615/global/networks/default --no-assign-ip --zone=us-central1-a
+
+-----------------------------------------------
+
+--------------------------TEST KUBERNETES DATABASE--------------------
+kubectl run -it --rm --image=mysql:5.7.22 --restart=Never mysql-client -- mysql -h <DNS O IP PRIVADA> -u root -p<PASSWORD>
+------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+------------------INSER DATOS --------
+CREATE DATABASE amigos;
+use amigos;
+
+CREATE TABLE `user` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+insert  into `user`(`id`,`name`,`email`) values
+(1,'Emilio telleria','tigrecapo@gmail.com'),
+(2,'Leonardo Azpeitia','chalaman@gmail.com'),
+(3,'Lucas Santurio','jockey@gmail.com'),
+(4,'Dario Rimasa','motos@gmail.com'),
+(5,'jose consolini','futbol@gmail.com'),
+(6,'German Polverigiani','coyote@gmail.com'),
+(7,'Adrian Crivelli','policia@gmail.com');
+---------------------------------------------------------------
+
+git clone https://github.com/gilardoni72/External_Name-gcp.git
+
+---- UPLOAD IMAGE TO GCP REGISTRY -------------------------------
+gcloud builds submit --tag gcr.io/demo1-364615/appamigos:v1 .
+------------------------------------------------------------------
+kubectl apply -f externalname.yaml
+kubectl apply -f web-service.ymal
+kubectl apply -f web-deploy.ymal
+
+kubectl get pod,deploy,svc
+
